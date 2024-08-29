@@ -129,8 +129,7 @@ void enableGLDebugOutput() {
 }
 
 // initialize SDL, openGL, config
-projectMSDL *setupSDLApp() {
-    projectMSDL *app;
+void setupSDL() {
     seedRand();
         
     if (!initLoopback())
@@ -154,6 +153,13 @@ projectMSDL *setupSDLApp() {
         exit(1);
     }
 
+    initGL();
+    enableGLDebugOutput();
+}
+
+projectMSDL* createApp(int windowIndex, int ofNumWindows) {
+    projectMSDL* app = nullptr;
+
     // default window size to usable bounds (e.g. minus menubar and dock)
     SDL_Rect initialWindowBounds;
 #if SDL_VERSION_ATLEAST(2, 0, 5)
@@ -164,8 +170,6 @@ projectMSDL *setupSDLApp() {
 #endif
     int width = initialWindowBounds.w;
     int height = initialWindowBounds.h;
-
-    initGL();
 
     SDL_Window *win = SDL_CreateWindow("projectM", 0, 0, width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
     SDL_GL_GetDrawableSize(win,&width,&height);
@@ -180,7 +184,8 @@ projectMSDL *setupSDLApp() {
 
     dumpOpenGLInfo();
 
-    SDL_SetWindowTitle(win, "projectM");
+    auto title = std::string("projectM ") + std::to_string(windowIndex);
+    SDL_SetWindowTitle(win, title.c_str());
 
     SDL_GL_MakeCurrent(win, glCtx);  // associate GL context with main window
     int avsync = SDL_GL_SetSwapInterval(-1); // try to enable adaptive vsync
@@ -195,7 +200,8 @@ projectMSDL *setupSDLApp() {
     std::string configFilePath = getConfigFilePath(base_path);
     std::string presetURL = base_path + "/presets";
 
-    app = new projectMSDL(glCtx, presetURL);
+    app = new projectMSDL(win, glCtx, presetURL);
+    SDL_SetWindowData(win, "app", app);
 
     if (! configFilePath.empty())
     {
@@ -228,7 +234,11 @@ projectMSDL *setupSDLApp() {
     } else {
         SDL_Log("SDL_GetDesktopDisplayMode failed: %s", SDL_GetError());
     }
-    SDL_SetWindowPosition(win, initialWindowBounds.x, initialWindowBounds.y);
+
+    width /= ofNumWindows;
+    int left = width * windowIndex;
+
+    SDL_SetWindowPosition(win, initialWindowBounds.x + left, initialWindowBounds.y);
     SDL_SetWindowSize(win, width, height);
     app->resize(width, height);
 
@@ -248,7 +258,6 @@ projectMSDL *setupSDLApp() {
     app->fakeAudio  = true;
 #endif
 
-    enableGLDebugOutput();
     configureLoopback(app);
 
 #if !FAKE_AUDIO && !WASAPI_LOOPBACK

@@ -32,15 +32,16 @@
  */
 
 #include "pmSDL.hpp"
+#include <vector>
 
-static int mainLoop(void *userData) {
-    projectMSDL **appRef = (projectMSDL **)userData;
-    auto app = *appRef;
-    
+static int mainLoop(const std::vector<projectMSDL*> &apps)
+{
 #if UNLOCK_FPS
     auto start = startUnlockedFPSCounter();
 #endif
     
+    auto app = apps.at(0);
+
     // frame rate limiter
     int fps = app->fps();
     if (fps <= 0)
@@ -49,18 +50,22 @@ static int mainLoop(void *userData) {
     Uint32 last_time = SDL_GetTicks();
     
     // loop
-    while (! app->done) {
+    while (projectMSDL::pollEvents())
+    {
         // render
-        app->renderFrame();
-        
-        if (app->fakeAudio)
-            app->addFakePCM();
-        processLoopbackFrame(app);
+        for (auto app : apps) {
+            SDL_GL_MakeCurrent(app->_window, app->_openGlContext);
+
+            app->renderFrame();
+
+            if (app->fakeAudio)
+                app->addFakePCM();
+            processLoopbackFrame(app);
+        }
         
 #if UNLOCK_FPS
         advanceUnlockedFPSCounterFrame(start);
 #else
-        app->pollEvent();
         Uint32 elapsed = SDL_GetTicks() - last_time;
         if (elapsed < frame_delay)
             SDL_Delay(frame_delay - elapsed);
@@ -72,17 +77,26 @@ static int mainLoop(void *userData) {
 }
 
 int main(int argc, char *argv[]) {
-    projectMSDL *app = setupSDLApp();
-    
-    int status = mainLoop(&app);
+    setupSDL();
+    std::vector<projectMSDL*> apps;
 
-    // cleanup
-    SDL_GL_DeleteContext(app->_openGlContext);
+    int numWindows = NUMBER_OF_WINDOWS;
+    for (int i = 0; i < numWindows; ++i) {
+        apps.push_back(createApp(i, numWindows));
+    }
+    
+    int status = mainLoop(apps);
+
+    for (auto app : apps)
+    {
+        // cleanup
+        SDL_GL_DeleteContext(app->_openGlContext);
 #if !FAKE_AUDIO
-    if (!app->wasapi) // not currently using WASAPI, so we need to endAudioCapture.
-        app->endAudioCapture();
+        if (!app->wasapi) // not currently using WASAPI, so we need to endAudioCapture.
+            app->endAudioCapture();
 #endif
-    delete app;
+        delete app;
+    }
     
     return status;
 }

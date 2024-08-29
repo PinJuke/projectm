@@ -103,11 +103,13 @@
 #endif
 #endif
 
+#define NUMBER_OF_WINDOWS 2
+
 class projectMSDL
 {
 
 public:
-    projectMSDL(SDL_GLContext glCtx, const std::string& presetPath);
+    projectMSDL(SDL_Window *window, SDL_GLContext glCtx, const std::string& presetPath);
 
     ~projectMSDL();
 
@@ -126,7 +128,7 @@ public:
     void touchDestroy(float x, float y);
     void touchDestroyAll();
     void renderFrame();
-    void pollEvent();
+    static bool pollEvents();
     bool keymod = false;
     std::string getActivePresetName();
     void addFakePCM();
@@ -141,6 +143,7 @@ public:
     bool stretch{false};   // used for toggling stretch mode
 
     SDL_GLContext _openGlContext{nullptr};
+    SDL_Window *_window{nullptr};
 
 private:
     static void presetSwitchedEvent(bool isHardCut, uint32_t index, void* context);
@@ -149,8 +152,9 @@ private:
 
     void UpdateWindowTitle();
 
-    void scrollHandler(SDL_Event*);
-    void keyHandler(SDL_Event*);
+    void handleEvent(const SDL_Event &evt);
+    void scrollHandler(const SDL_Event& evt);
+    void keyHandler(const SDL_Event& evt);
 
     projectm_handle _projectM{nullptr};
     projectm_playlist_handle _playlist{nullptr};

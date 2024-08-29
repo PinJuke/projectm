@@ -22,7 +22,8 @@ void dumpOpenGLInfo();
 void initStereoscopicView(SDL_Window *win);
 void enableGLDebugOutput();
 void testAllPresets(projectMSDL *app);
-projectMSDL *setupSDLApp();
+void setupSDL();
+projectMSDL* createApp(int windowIndex, int ofNumWindows);
 int64_t startUnlockedFPSCounter();
 void advanceUnlockedFPSCounterFrame(int64_t startFrame);
 
