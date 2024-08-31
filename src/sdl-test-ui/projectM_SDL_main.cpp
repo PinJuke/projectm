@@ -54,8 +54,7 @@ static int mainLoop(const std::vector<projectMSDL*> &apps)
     {
         // render
         for (auto app : apps) {
-            SDL_GL_MakeCurrent(app->_window, app->_openGlContext);
-
+            app->glMakeCurrent();
             app->renderFrame();
 
             if (app->fakeAudio)

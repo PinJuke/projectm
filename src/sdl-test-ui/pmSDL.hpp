@@ -127,6 +127,7 @@ public:
     void touchDrag(float x, float y, int pressure);
     void touchDestroy(float x, float y);
     void touchDestroyAll();
+    void glMakeCurrent();
     void renderFrame();
     static bool pollEvents();
     bool keymod = false;

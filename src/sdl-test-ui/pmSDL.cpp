@@ -346,6 +346,7 @@ bool projectMSDL::pollEvents()
             continue;
         }
         projectMSDL* app = (projectMSDL*) SDL_GetWindowData(window, "app");
+        app->glMakeCurrent();
         app->handleEvent(evt);
         if (app->done)
         {
@@ -468,6 +469,11 @@ void projectMSDL::touchDestroy(float x, float y)
 void projectMSDL::touchDestroyAll()
 {
     projectm_touch_destroy_all(_projectM);
+}
+
+void projectMSDL::glMakeCurrent()
+{
+    SDL_GL_MakeCurrent(_window, _openGlContext);
 }
 
 void projectMSDL::renderFrame()
